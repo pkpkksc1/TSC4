@@ -11,7 +11,7 @@
     padding:14px; border-bottom:2px solid #000; gap:10px; flex-wrap:wrap;
   }
   .brand{border:2px solid #000; padding:8px 14px; font-weight:900; min-width:80px; text-align:center;}
-  .btns{display:flex; gap:10px;}
+  .btns{display:flex; gap:10px; flex-wrap:wrap;}
   button{
     border:2px solid #000; background:#fff; color:#000;
     padding:10px 18px; font-weight:900; cursor:pointer;
@@ -22,7 +22,7 @@
     border:2px solid #000;
     min-height:60vh;
     padding:18px;
-    white-space:pre-wrap;   /* 줄바꿈 유지 */
+    white-space:pre-wrap;
     line-height:1.6;
     font-size:18px;
   }
@@ -36,6 +36,7 @@
   <div class="topbar">
     <div class="brand">TSC</div>
     <div class="btns">
+      <button id="reload">불러오기</button>
       <button id="prev">이전</button>
       <button id="next">다음</button>
     </div>
@@ -47,20 +48,17 @@
   </div>
 
 <script>
-  const FILE_URL = "data.txt";   // 같은 폴더(루트)에 data.txt 올리기
-  const SEP = "\n---\n";         // 구분자 (원하면 "---"만으로도 가능)
+  const FILE_URL = "data.txt";
 
   let pages = [];
   let idx = 0;
 
   function normalize(text){
-    // 줄끝 정리 + 구분자 통일(--- 앞뒤 공백/줄바꿈 있어도 잘 자르게)
     return text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
   }
 
   function splitPages(text){
-    // --- 라인이 있으면 그걸 기준으로 자르기(유연하게)
-    // (줄바꿈 없이 ---만 써도 동작하게)
+    // 구분자: 줄 단독으로 --- (앞뒤 공백 허용)
     const raw = text.split(/\n\s*---\s*\n/g);
     return raw.map(s => s.trim()).filter(Boolean);
   }
@@ -71,7 +69,7 @@
 
     if(!pages.length){
       st.textContent = "데이터 없음 (data.txt 확인)";
-      box.textContent = "data.txt에 내용을 넣고 --- 로 구분해줘!";
+      box.textContent = "data.txt에 내용을 넣고, 페이지 사이에 줄 단독으로 --- 를 넣어줘!";
       return;
     }
 
@@ -94,9 +92,13 @@
     render();
   }
 
-  async function init(){
+  async function loadFile(){
+    // ✅ 캐시 완전 방지: 매번 다른 URL로 fetch
+    const url = `${FILE_URL}?ts=${Date.now()}`;
+
+    document.getElementById("status").textContent = "불러오는 중...";
     try{
-      const res = await fetch(FILE_URL, { cache: "no-store" });
+      const res = await fetch(url, { cache: "no-store" });
       if(!res.ok) throw new Error("fetch failed");
       const text = normalize(await res.text());
       pages = splitPages(text);
@@ -111,14 +113,16 @@
 
   document.getElementById("next").addEventListener("click", next);
   document.getElementById("prev").addEventListener("click", prev);
+  document.getElementById("reload").addEventListener("click", loadFile);
 
-  // PC 키보드
   window.addEventListener("keydown", (e)=>{
     if(e.key === "ArrowRight") next();
     if(e.key === "ArrowLeft") prev();
+    if(e.key.toLowerCase() === "r") loadFile();
   });
 
-  init();
+  // 시작 시 1회 로드
+  loadFile();
 </script>
 </body>
 </html>

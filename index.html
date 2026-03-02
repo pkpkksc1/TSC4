@@ -59,7 +59,7 @@
 
   function splitPages(text){
     // 구분자: 줄 단독으로 --- (앞뒤 공백 허용)
-    const raw = text.split(/\n\s*---\s*\n/g);
+    const raw = text.split(/\n\s*-{3,}\s*\n/g);
     return raw.map(s => s.trim()).filter(Boolean);
   }
 
@@ -126,3 +126,4 @@
 </script>
 </body>
 </html>
+
